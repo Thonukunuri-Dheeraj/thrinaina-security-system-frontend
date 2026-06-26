@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -10,7 +10,7 @@ import ServiceRequest from './pages/ServiceRequest';
 import Contact from './pages/Contact';
 import { isCustomerAuthenticated, api, customerLogout, getStoredCustomer } from './services/api';
 import logoImg from './assets/logo.jpg';
-import { AlertTriangle, User, Phone, Mail, LogOut, CheckCircle, Copy, X, Wrench } from 'lucide-react';
+import { AlertTriangle, User, Mail, LogOut, CheckCircle, Copy, X, Wrench } from 'lucide-react';
 
 // Customer Account Dashboard Modal Overlay
 function AccountDashboardModal({ onClose, onLogout }) {
@@ -453,8 +453,6 @@ function AccountDashboardModal({ onClose, onLogout }) {
 
 
 function AppContent() {
-  const location = useLocation();
-
   // Customer Portal Gate States
   const [isCustomerAuth, setIsCustomerAuth] = useState(isCustomerAuthenticated());
   const [isDashboardOpen, setIsDashboardOpen] = useState(false);

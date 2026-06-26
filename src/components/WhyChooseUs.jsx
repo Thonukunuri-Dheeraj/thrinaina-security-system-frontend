@@ -1,5 +1,4 @@
 import { ShieldCheck, Cpu, Clock, Award, Hammer, Brain } from 'lucide-react';
-import logoImg from '../assets/logo.jpg';
 
 export default function WhyChooseUs() {
   const points = [

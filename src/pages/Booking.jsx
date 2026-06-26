@@ -1,13 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { useLocation, Link, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { api, isCustomerAuthenticated, getStoredCustomer } from '../services/api';
-import { Calendar, Clock, Camera, FileText, CheckCircle, Copy, AlertTriangle, ArrowRight, User, Phone, Mail, MapPin, Search } from 'lucide-react';
+import { Calendar, Clock, Camera, FileText, Copy, AlertTriangle, ArrowRight, User, Phone, Mail, MapPin, Search } from 'lucide-react';
 
 export default function Booking() {
   const location = useLocation();
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [successData, setSuccessData] = useState(null);
@@ -34,49 +33,21 @@ export default function Booking() {
   const [authConfirmPassword, setAuthConfirmPassword] = useState('');
   const [authError, setAuthError] = useState(null);
   const [authLoading, setAuthLoading] = useState(false);
-  const [bookingsHistory, setBookingsHistory] = useState([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
-
   // Form State
   const [formData, setFormData] = useState({
-    name: '',
-    mobile: '',
-    email: '',
+    name: customer?.full_name || '',
+    mobile: (customer?.phone && customer?.phone !== 'N/A') ? customer.phone : '',
+    email: customer?.email || '',
     address: '',
-    service_type: 'CCTV Installation',
-    cameras_count: 4,
+    service_type: location.state?.serviceType || 'CCTV Installation',
+    cameras_count: location.state?.camerasCount !== undefined ? location.state.camerasCount : 4,
     preferred_date: '',
     preferred_time: '09:00 AM - 12:00 PM',
     additional_requirements: ''
   });
 
   // Pre-fill user details and fetch history when logged in
-  useEffect(() => {
-    if (isCustomerAuth && customer) {
-      setFormData(prev => ({
-        ...prev,
-        name: customer.full_name || '',
-        email: customer.email || '',
-        mobile: (customer.phone && customer.phone !== 'N/A') ? customer.phone : ''
-      }));
-      fetchHistory();
-    }
-  }, [isCustomerAuth, customer]);
 
-  // Fetch bookings history
-  const fetchHistory = async () => {
-    setHistoryLoading(true);
-    try {
-      const res = await api.bookings.getMyBookings();
-      if (res.success) {
-        setBookingsHistory(res.bookings);
-      }
-    } catch (err) {
-      console.error('Error fetching booking history:', err);
-    } finally {
-      setHistoryLoading(false);
-    }
-  };
 
   // Email Login
   const handleEmailLogin = async (e) => {
@@ -94,6 +65,12 @@ export default function Booking() {
       if (res.success) {
         setCustomer(res.user);
         setIsCustomerAuth(true);
+        setFormData(prev => ({
+          ...prev,
+          name: res.user.full_name || '',
+          email: res.user.email || '',
+          mobile: (res.user.phone && res.user.phone !== 'N/A') ? res.user.phone : ''
+        }));
         // Force header update
         window.dispatchEvent(new Event('storage'));
       }
@@ -148,6 +125,12 @@ export default function Booking() {
         if (loginRes.success) {
           setCustomer(loginRes.user);
           setIsCustomerAuth(true);
+          setFormData(prev => ({
+            ...prev,
+            name: loginRes.user.full_name || '',
+            email: loginRes.user.email || '',
+            mobile: (loginRes.user.phone && loginRes.user.phone !== 'N/A') ? loginRes.user.phone : ''
+          }));
           // Force header update
           window.dispatchEvent(new Event('storage'));
         }
@@ -161,16 +144,7 @@ export default function Booking() {
 
 
 
-  // Pre-fill service type and cameras count if passed
-  useEffect(() => {
-    if (location.state) {
-      setFormData(prev => ({
-        ...prev,
-        ...(location.state.serviceType && { service_type: location.state.serviceType }),
-        ...(location.state.camerasCount !== undefined && { cameras_count: location.state.camerasCount })
-      }));
-    }
-  }, [location.state]);
+
 
   const timeSlots = [
     '09:00 AM - 12:00 PM',
@@ -301,7 +275,6 @@ export default function Booking() {
         setSuccessData(response.booking);
         setShowSuccess(true);
         setFormKey(prev => prev + 1);
-        fetchHistory(); // Sync history
         // Reset fields keeping authenticated pre-fills
         setFormData({
           name: customer.full_name || '',

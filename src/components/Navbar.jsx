@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, LogOut, Camera, ChevronDown, Home as HomeIcon, Building, Factory, ArrowRight, User } from 'lucide-react';
-import { isCustomerAuthenticated, customerLogout, getStoredCustomer } from '../services/api';
+import { Link, useLocation } from 'react-router-dom';
+import { Menu, X, ChevronDown, Home as HomeIcon, Building, Factory, ArrowRight, User } from 'lucide-react';
+import { isCustomerAuthenticated, getStoredCustomer } from '../services/api';
 import logoImg from '../assets/logo.jpg';
 
 export default function Navbar({ onProfileClick }) {
@@ -9,16 +9,8 @@ export default function Navbar({ onProfileClick }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobilePackagesOpen, setIsMobilePackagesOpen] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
   const isCustomer = isCustomerAuthenticated();
   const customerUser = getStoredCustomer();
-
-  const getInitials = (name) => {
-    if (!name) return 'C';
-    const parts = name.trim().split(/\s+/);
-    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  };
 
   // Set background transparency on scroll
   useEffect(() => {
@@ -32,21 +24,6 @@ export default function Navbar({ onProfileClick }) {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  // Close packages sub-menu on mobile when menu drawer closes
-  useEffect(() => {
-    if (!isOpen) {
-      setIsMobilePackagesOpen(false);
-    }
-  }, [isOpen]);
-
-  const handleLogout = () => {
-    customerLogout();
-    setIsOpen(false);
-    navigate('/');
-    // Force rerender
-    window.location.reload();
-  };
 
   const packages = [
     {
@@ -199,7 +176,12 @@ export default function Navbar({ onProfileClick }) {
           {/* Mobile hamburger menu */}
           <div className="md:hidden flex items-center">
             <button
-              onClick={() => setIsOpen(!isOpen)}
+              onClick={() => {
+                setIsOpen(!isOpen);
+                if (isOpen) {
+                  setIsMobilePackagesOpen(false);
+                }
+              }}
               className="p-2 rounded-lg text-slate-400 hover:text-slate-100 focus:outline-none transition-colors duration-200"
             >
               {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -275,7 +257,10 @@ export default function Navbar({ onProfileClick }) {
               <Link
                 key={link.name}
                 to={link.path}
-                onClick={() => setIsOpen(false)}
+                onClick={() => {
+                  setIsOpen(false);
+                  setIsMobilePackagesOpen(false);
+                }}
                 className={`block px-4 py-3 text-base font-semibold rounded-xl transition-all duration-300 ${
                   isActive(link.path)
                     ? 'text-security-gold bg-security-card border-l-4 border-security-gold'
@@ -294,6 +279,7 @@ export default function Navbar({ onProfileClick }) {
               <button
                 onClick={() => {
                   setIsOpen(false);
+                  setIsMobilePackagesOpen(false);
                   onProfileClick();
                 }}
                 className="flex items-center gap-3.5 w-full p-3 bg-gradient-to-r from-slate-950/80 to-slate-900/60 border border-slate-800/80 hover:border-security-gold/50 text-slate-200 hover:text-security-gold rounded-xl transition-all duration-300 cursor-pointer shadow-lg group"
@@ -321,7 +307,10 @@ export default function Navbar({ onProfileClick }) {
           ) : (
             <Link
               to="/booking"
-              onClick={() => setIsOpen(false)}
+              onClick={() => {
+                setIsOpen(false);
+                setIsMobilePackagesOpen(false);
+              }}
               className="flex items-center justify-center w-full py-3.5 bg-security-gold hover:bg-security-goldHover text-security-bg font-extrabold rounded-xl transition-all duration-300 shadow-gold-glow"
             >
               Book Security Service

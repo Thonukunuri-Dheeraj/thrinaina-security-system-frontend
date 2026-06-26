@@ -1,17 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { api, isCustomerAuthenticated, getStoredCustomer } from '../services/api';
-import { ShieldAlert, Search, FileText, CheckCircle, AlertTriangle, User, Phone, Mail, MapPin, Wrench, Info, Calendar, Copy } from 'lucide-react';
+import { Search, FileText, AlertTriangle, User, Phone, Mail, MapPin, Wrench, Copy } from 'lucide-react';
 
 export default function ServiceRequest() {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState('raise'); // 'raise' or 'track'
 
+  // Customer State
+  const [customer, setCustomer] = useState(getStoredCustomer());
+  const [isCustomerAuth, setIsCustomerAuth] = useState(isCustomerAuthenticated());
+
   // Tab 1: Raise request states
   const [formData, setFormData] = useState({
-    name: '',
-    mobile: '',
-    email: '',
+    name: customer?.full_name || '',
+    mobile: (customer?.phone && customer?.phone !== 'N/A') ? customer.phone : '',
+    email: customer?.email || '',
     address: '',
     request_type: '',
     description: ''
@@ -22,9 +26,6 @@ export default function ServiceRequest() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [formKey, setFormKey] = useState(0);
 
-  // Customer State
-  const [customer, setCustomer] = useState(getStoredCustomer());
-  const [isCustomerAuth, setIsCustomerAuth] = useState(isCustomerAuthenticated());
   const [authTab, setAuthTab] = useState('login'); // 'login' or 'register'
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
@@ -33,44 +34,16 @@ export default function ServiceRequest() {
   const [authConfirmPassword, setAuthConfirmPassword] = useState('');
   const [authError, setAuthError] = useState(null);
   const [authLoading, setAuthLoading] = useState(false);
-  const [requestsHistory, setRequestsHistory] = useState([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
   const [copiedId, setCopiedId] = useState(null);
 
   // Tab 2: Tracking states
-  const [trackSearchId, setTrackSearchId] = useState('');
+  const [trackSearchId, setTrackSearchId] = useState(location.state?.searchBookingId || '');
   const [trackLoading, setTrackLoading] = useState(false);
   const [trackError, setTrackError] = useState(null);
   const [trackResult, setTrackResult] = useState(null);
-  const [trackType, setTrackType] = useState(''); // 'booking' or 'request'
 
   // Pre-fill user details and fetch history when logged in
-  useEffect(() => {
-    if (isCustomerAuth && customer) {
-      setFormData(prev => ({
-        ...prev,
-        name: customer.full_name || '',
-        email: customer.email || '',
-        mobile: (customer.phone && customer.phone !== 'N/A') ? customer.phone : ''
-      }));
-      fetchHistory();
-    }
-  }, [isCustomerAuth, customer]);
 
-  // Fetch requests history
-  const fetchHistory = async () => {
-    setHistoryLoading(true);
-    try {
-      const res = await api.bookings.getMyBookings();
-      if (res.success) {
-        setRequestsHistory(res.bookings);
-      }
-    } catch (err) {
-      console.error('Error fetching request history:', err);
-    } finally {
-      setHistoryLoading(false);
-    }
-  };
 
   // Email Login
   const handleEmailLogin = async (e) => {
@@ -88,6 +61,12 @@ export default function ServiceRequest() {
       if (res.success) {
         setCustomer(res.user);
         setIsCustomerAuth(true);
+        setFormData(prev => ({
+          ...prev,
+          name: res.user.full_name || '',
+          email: res.user.email || '',
+          mobile: (res.user.phone && res.user.phone !== 'N/A') ? res.user.phone : ''
+        }));
         window.dispatchEvent(new Event('storage'));
       }
     } catch (err) {
@@ -141,6 +120,12 @@ export default function ServiceRequest() {
         if (loginRes.success) {
           setCustomer(loginRes.user);
           setIsCustomerAuth(true);
+          setFormData(prev => ({
+            ...prev,
+            name: loginRes.user.full_name || '',
+            email: loginRes.user.email || '',
+            mobile: (loginRes.user.phone && loginRes.user.phone !== 'N/A') ? loginRes.user.phone : ''
+          }));
           window.dispatchEvent(new Event('storage'));
         }
       }
@@ -153,13 +138,7 @@ export default function ServiceRequest() {
 
 
 
-  // Pre-fill tracking ID if navigated from Booking success
-  useEffect(() => {
-    if (location.state && location.state.searchBookingId) {
-      setTrackSearchId(location.state.searchBookingId);
-      triggerTracking(location.state.searchBookingId);
-    }
-  }, [location.state]);
+
 
   const handleInputChange = (e) => {
     setShowSuccess(false);
@@ -226,6 +205,8 @@ export default function ServiceRequest() {
     const id = searchId.trim();
     if (!id) return;
 
+    await Promise.resolve();
+
     setTrackLoading(true);
     setTrackError(null);
     setTrackResult(null);
@@ -233,7 +214,6 @@ export default function ServiceRequest() {
     try {
       const res = await api.requests.track(id);
       if (res.success) {
-        setTrackType('request');
         setTrackResult(res.request);
       } else {
         setTrackError('Invalid Tracking ID');
@@ -244,6 +224,16 @@ export default function ServiceRequest() {
       setTrackLoading(false);
     }
   };
+
+  // Pre-fill tracking ID if navigated from Booking success
+  useEffect(() => {
+    if (location.state && location.state.searchBookingId) {
+      const timer = setTimeout(() => {
+        triggerTracking(location.state.searchBookingId);
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [location.state]);
 
   const handleRaiseSubmit = async (e) => {
     e.preventDefault();
@@ -261,7 +251,6 @@ export default function ServiceRequest() {
         setRaiseSuccess(res.request);
         setShowSuccess(true);
         setFormKey(prev => prev + 1);
-        fetchHistory();
         setFormData({
           name: customer.full_name || '',
           email: customer.email || '',

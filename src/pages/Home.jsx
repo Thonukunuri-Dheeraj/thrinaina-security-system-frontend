@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Camera, ShieldAlert, CheckCircle, ChevronDown, ArrowRight, Eye, PhoneCall } from 'lucide-react';
+import { CheckCircle, ChevronDown, ArrowRight } from 'lucide-react';
 import Stats from '../components/Stats';
 import WhyChooseUs from '../components/WhyChooseUs';
 import Testimonials from '../components/Testimonials';

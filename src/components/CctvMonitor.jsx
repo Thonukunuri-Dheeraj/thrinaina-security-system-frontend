@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Camera, Eye, Power } from 'lucide-react';
+import { Camera, Power } from 'lucide-react';
 
 export default function CctvMonitor() {
   const [isPlaying, setIsPlaying] = useState(true);

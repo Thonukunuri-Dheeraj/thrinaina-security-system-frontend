@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Camera, Wrench, ShieldCheck, PhoneCall, Building, Factory, Globe, ArrowRight } from 'lucide-react';
+import { Camera, Wrench, ShieldCheck, Globe, ArrowRight } from 'lucide-react';
 
 export default function Services() {
   const servicesList = [
